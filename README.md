@@ -4,7 +4,7 @@
 
 Package fragmentation is rampant.
 
-Instead of making yet another new format ([relevant XKCD](https://xkcd.com/927/)), here's a tool that combines several.
+Instead of making yet another new format ([relevant XKCD](https://xkcd.com/927/)), here"s a tool that combines several.
 
 THIS PROJECT HAS NOT BEEN RELEASED YET. THE BASIC FEATURE SET IS NOT IMPLEMENTED!!!!
 
@@ -15,7 +15,7 @@ Currently, these are planned package formats supported:
 - apt (Debian)
 - pacman (Arch)
 - pacman AUR (also Arch)
-- flatpak (general)
+- flathub (general)
 - AppImage (general)
 - GitHub source which requires more info (general)
 
@@ -25,22 +25,25 @@ A list of supported packages are stored remotely in the pkg-ls.json file in the 
 
 ```
 {
-    'pkg_name': {
-        'dnf': 'name in Fedora repos',
-        'apt': 'name in Debian repos',
-        'pacman': 'name in pacman repos',
-        'aur': 'name in AUR',
-        'flatpak': 'name in flatpak',
-        'appimage': 'link to appimage',
-        'github': {
-            'repo': 'link to GitHub repo',
-            'steps': [
-                'first shell step to run (expects POSIX compliant shell)',
-                '...',
+    "name": "One-Pkg name",
+    "install": {
+        "dnf": "name in Fedora repos",
+        "apt": "name in Debian repos",
+        "pacman": "name in pacman repos",
+        "aur": "name in AUR",
+        "flathub": "name in flatpak",
+        "appimage": {
+            "link": "link to appimage",
+            "name": "name to show in applications view"
+        }, "github": {
+            "repo": "link to GitHub repo",
+            "steps": [
+                "first shell step to run (expects POSIX compliant shell)",
+                "...",
                 ...
-            ], 'deps': [
-                'other one-pkg dependency',
-                '...',
+            ], "deps": [
+                "other one-pkg dependency",
+                "...",
                 ...
             ]
         }
@@ -48,23 +51,23 @@ A list of supported packages are stored remotely in the pkg-ls.json file in the 
 }
 ```
 
-Again, I'd love for you to contribute as not all packages will have all installs set up.
+Again, I"d love for you to contribute as not all packages will have all installs set up.
 
 ## Usage
 
 The basic use case is `onepkg install <package>` or `onepkg uninstall <package>`
 
-When installing, you will be prompted with a prompt based on which package format you'd like to use:
+When installing, you will be prompted with a prompt based on which package format you"d like to use:
 
 ```
 The package '<package>' is available in the following formats:
 (1). dnf (Fedora)
 (2). Flatpak
 (3). AppImage
-Please enter a number for which format you'd like to use: _
+Please enter a number for which format you"d like to use: _
 ```
 
-You'll then pick your desired format, and it will run the command using the corresponding package manager.
+You"ll then pick your desired format, and it will run the command using the corresponding package manager.
 
 Internally, one-pkg keeps track of which packages are installed and what format they were installed with.
 If they are only a dependency for a source package, they will be uninstalled.
