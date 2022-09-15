@@ -52,7 +52,7 @@ Again, I'd love for you to contribute as not all packages will have all installs
 
 ## Usage
 
-The basic use case is `onepkg install <package>` or `onepkg uninstall <package>` (alternatively `onepkg -i/-u`)
+The basic use case is `onepkg install <package>` or `onepkg uninstall <package>`
 
 When installing, you will be prompted with a prompt based on which package format you'd like to use:
 
@@ -69,7 +69,7 @@ You'll then pick your desired format, and it will run the command using the corr
 Internally, one-pkg keeps track of which packages are installed and what format they were installed with.
 If they are only a dependency for a source package, they will be uninstalled.
 
-There is also `onepkg auto-remove` (or `onepkg -r`) which will tell certain package managers to remove unused packages, specifically:
+There is also `onepkg auto-uninstall` which will tell certain package managers to remove unused packages, specifically:
 - Pacman: `pacman -r $(Qtdq)`
 - Debian: `sudo apt auto-remove`
 
