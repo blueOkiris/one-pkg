@@ -4,8 +4,15 @@
  */
 
 mod args;
+mod package;
 
-use crate::args::get_args;
+use crate::{
+    args::get_args,
+    package::{
+        Package,
+        update_repo
+    }
+};
 
 fn main() {
     let command = get_args();
@@ -16,6 +23,7 @@ fn main() {
             "install" => install(args.value_of("PACKAGE").expect("No package name provided!")),
             "uninstall" => uninstall(args.value_of("PACKAGE").expect("No package name provided!")),
             "auto-uninstall" => auto_uninstall(),
+            "update" => update(),
             _ => {} // Handled by clap
     
         }
@@ -26,6 +34,10 @@ fn main() {
 
 fn install(pkg_name: &str) {
     println!("Installing package {}.", pkg_name);
+    let pkgs = Package::load();
+    for pkg in pkgs {
+        println!("Package found: {:?}", pkg);
+    }
 }
 
 fn uninstall(pkg_name: &str) {
@@ -34,5 +46,10 @@ fn uninstall(pkg_name: &str) {
 
 fn auto_uninstall() {
     println!("Auto-uninstalling packages.");
+}
+
+fn update() {
+   println!("Updating repo.");
+   update_repo()
 }
 
