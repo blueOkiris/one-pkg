@@ -1,0 +1,20 @@
+{
+    {
+        "name": "blender",
+        "install": {
+            "dnf": "blender",
+            "apt": "",
+            "pacman": "",
+            "aur": "",
+            "flathub": "org.blender.Blender",
+            "appimage": {
+                "link": "https://apprepo.de/appimage/download/blender",
+                "name": "Blender"
+            }, "github": {
+                "repo": "",
+                "steps": [],
+                "deps": []
+            }
+        }
+    }
+}
