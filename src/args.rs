@@ -20,6 +20,9 @@ pub fn get_args() -> ArgMatches {
         ).subcommand(
             Command::new("auto-uninstall")
                 .about("Auto-remove leftovers from certain package formats.")
+        ).subcommand(
+            Command::new("update")
+                .about("Update the package list from GitHub.")
         ).get_matches()
 } 
 
