@@ -8,9 +8,10 @@ use std::{
         create_dir_all,
         rename,
         File
-    }, process::Command,
-    io::{
-        stdin, Read        
+    }, process::{
+        Command, Stdio
+    }, io::{
+        stdin, Read, stdout, Write
     }
 };
 use dirs::config_dir;
@@ -124,7 +125,8 @@ impl Package {
         for i in 0..opts.len() {
             println!("({}) {:?}", i + 1, opts[i]);
         }
-        println!("Please enter a number for which format you'd like to use:");
+        print!("Please enter a number for which format you'd like to use: ");
+        stdout().flush().unwrap();
         let mut choice = String::new();
         let inp = stdin();
         let read_res = inp.read_line(&mut choice);
@@ -148,17 +150,89 @@ impl Package {
         }
 
         // Install
-        match opts[0] {
+        match opts[choice_num] {
             Format::Dnf => {
-                
+                println!("Installing via dnf.");
+                let install_res = Command::new("dnf")
+                    .args([
+                        "install",
+                        pkg.install.dnf.as_str()
+                    ]).spawn();
+                if install_res.is_err() {
+                    return Err(format!(
+                        "Failed to install via dnf. Error: {}", install_res.err().unwrap()
+                    ));
+                }
+                let mut install_res = install_res.unwrap();
+                if install_res.wait().is_err() {
+                    return Err(format!(
+                        "Can't wait for dnf to run. Error: {}",
+                        install_res.wait().err().unwrap()
+                    ));
+                }
+                install_res.wait().unwrap();
             }, Format::Apt => {
-
+                println!("Installing via apt.");
+                let install_res = Command::new("apt")
+                    .args([
+                        "install",
+                        pkg.install.apt.as_str()
+                    ]).spawn();
+                if install_res.is_err() {
+                    return Err(format!(
+                        "Failed to install via apt. Error: {}", install_res.err().unwrap()
+                    ));
+                }
+                let mut install_res = install_res.unwrap();
+                if install_res.wait().is_err() {
+                    return Err(format!(
+                        "Can't wait for apt to run. Error: {}",
+                        install_res.wait().err().unwrap()
+                    ));
+                }
+                install_res.wait().unwrap();
             }, Format::Pacman => {
-
+                println!("Installing via pacman.");
+                let install_res = Command::new("pacman")
+                    .args([
+                        "-S",
+                        pkg.install.pacman.as_str()
+                    ]).spawn();
+                if install_res.is_err() {
+                    return Err(format!(
+                        "Failed to install via pacman. Error: {}", install_res.err().unwrap()
+                    ));
+                }
+                let mut install_res = install_res.unwrap();
+                if install_res.wait().is_err() {
+                    return Err(format!(
+                        "Can't wait for pacman to run. Error: {}",
+                        install_res.wait().err().unwrap()
+                    ));
+                }
+                install_res.wait().unwrap();
             }, Format::Aur => {
 
             }, Format::Flathub => {
-    
+                println!("Installing via flathub.");
+                let install_res = Command::new("flatpak")
+                    .args([
+                        "install",
+                        pkg.install.flathub.as_str()
+                    ]).spawn();
+                if install_res.is_err() {
+                    return Err(format!(
+                        "Failed to install via flathub. Error: {}", install_res.err().unwrap()
+                    ));
+                }
+                let mut install_res = install_res.unwrap();
+                if install_res.wait().is_err() {
+                    return Err(format!(
+                        "Can't wait for flatpak to run. Error: {}",
+                        install_res.wait().err().unwrap()
+                    ));
+                }
+                install_res.wait().unwrap();
             }, Format::AppImage => {
 
             }, Format::GitHub => {
@@ -264,7 +338,7 @@ pub fn update_repo() -> Result<(), String> {
         if create.is_err() {
             return Err(format!(
                 "Failed to create .config/one-pkg. Error: {}", create.err().unwrap()
-            ));    
+            ));
         }
     }
 
@@ -290,12 +364,19 @@ pub fn update_repo() -> Result<(), String> {
             "-o",
             format!("{}/pkg-ls.json", conf.into_os_string().to_str().unwrap()).as_str(),
             PKG_LS_URL
-        ]).output();
+        ]).spawn();
     if curl_res.is_err() {
         return Err(format!(
             "Failed to download new pkg-ls.json. Error: {}", curl_res.err().unwrap()
         ));
     }
+    let mut curl_res = curl_res.unwrap();
+    if curl_res.wait().is_err() {
+        return Err(format!(
+            "Can't wait for curl to run. Error: {}", curl_res.wait().err().unwrap()
+        ));
+    }
+    curl_res.wait().unwrap();
 
     println!("Verifying new repo...");
     Package::load()?;
