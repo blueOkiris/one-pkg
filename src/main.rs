@@ -27,8 +27,8 @@ fn main() {
             "uninstall" => Package::uninstall(
                 args.value_of("PACKAGE").expect("No package name provided!")
             ).unwrap(),
-            "auto-uninstall" => auto_uninstall(),
-            "update" => update_repo(),
+            "auto-uninstall" => auto_uninstall().unwrap(),
+            "update" => update_repo().unwrap(),
             _ => {} // Handled by clap
     
         }
