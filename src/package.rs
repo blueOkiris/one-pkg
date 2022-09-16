@@ -8,7 +8,10 @@ use std::{
         create_dir_all,
         rename,
         File
-    }, process::Command, io::Read
+    }, process::Command,
+    io::{
+        stdin, Read        
+    }
 };
 use dirs::config_dir;
 use serde::Deserialize;
@@ -45,6 +48,7 @@ pub struct AppImageInfo {
 pub struct GitHubInfo {
     pub repo: String,
     pub steps: Vec<String>,
+    pub uninstall_steps: Vec<String>,
     pub deps: Vec<String>
 }
 
@@ -73,7 +77,7 @@ impl Package {
         let installed = Self::installed()?;
         for pkg in installed {
             if pkg.name == name {
-                println!("Package '{}' already installed.", name);
+                println!("Package '{}' already installed via {:?}.", name, pkg.method);
                 return Ok(());
             }
         }
@@ -88,6 +92,78 @@ impl Package {
         }
         if pkg.is_none() {
             return Err(String::from("Package '{}' has no install candidate."));
+        }
+        let pkg = pkg.unwrap();
+
+        // Select all install options
+        let mut opts = Vec::new();
+        if pkg.install.dnf != "" {
+            opts.push(Format::Dnf);
+        }
+        if pkg.install.apt != "" {
+            opts.push(Format::Apt);
+        }
+        if pkg.install.pacman != "" {
+            opts.push(Format::Pacman);
+        }
+        if pkg.install.aur != "" {
+            opts.push(Format::Aur);
+        }
+        if pkg.install.flathub != "" {
+            opts.push(Format::Flathub);
+        }
+        if pkg.install.appimage.link != "" {
+            opts.push(Format::AppImage);
+        }
+        if pkg.install.github.repo != "" {
+            opts.push(Format::GitHub);
+        }
+
+        // Get user input
+        println!("The package '{}' is available in the following formats:", pkg.name);
+        for i in 0..opts.len() {
+            println!("({}) {:?}", i + 1, opts[i]);
+        }
+        println!("Please enter a number for which format you'd like to use:");
+        let mut choice = String::new();
+        let inp = stdin();
+        let read_res = inp.read_line(&mut choice);
+        if read_res.is_err() {
+            return Err(format!(
+                "Failed to take user input. Error: {}", read_res.err().unwrap()
+            ));
+        }
+        choice.pop();
+        let choice_num = choice.parse::<usize>();
+        if choice_num.is_err() {
+            return Err(format!(
+                "Failed to parse input value. Not a number. Error: {}", choice_num.err().unwrap()
+            ));
+        }
+        let choice_num = choice_num.unwrap() - 1;
+        if choice_num >= opts.len() {
+            return Err(format!(
+                "{} was not an option, you stupid idiot.", choice_num
+            ));
+        }
+
+        // Install
+        match opts[0] {
+            Format::Dnf => {
+                
+            }, Format::Apt => {
+
+            }, Format::Pacman => {
+
+            }, Format::Aur => {
+
+            }, Format::Flathub => {
+    
+            }, Format::AppImage => {
+
+            }, Format::GitHub => {
+
+            }
         }
 
         Ok(())
@@ -156,7 +232,7 @@ impl Package {
                 "Couldn't open installed list file. Error: {}", installed_file.err().unwrap()
             ));
         }
-        let installed_file = installed_file.unwrap();
+        let mut installed_file = installed_file.unwrap();
         let mut installed_str = String::new();
         let read_res = installed_file.read_to_string(&mut installed_str);
         if read_res.is_err() {
