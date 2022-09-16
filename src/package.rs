@@ -70,7 +70,7 @@ impl Package {
         println!("Installing package {}.", name);
 
         // Check if something is already installed
-        let installed = Self::installed();
+        let installed = Self::installed()?;
         for pkg in installed {
             if pkg.name == name {
                 println!("Package '{}' already installed.", name);
@@ -108,7 +108,7 @@ impl Package {
         conf.push("one-pkg");
         conf.push("pkg-ls.json");
         if !conf.exists() {
-            update_repo()
+            update_repo()?;
         }
 
         // Open, read, and parse the file
@@ -133,40 +133,63 @@ impl Package {
         }
     }
 
-    fn installed() -> Vec<InstallInfo> {
-        let mut conf = config_dir().expect("Failed to fina config directory for OS.");
+    fn installed() -> Result<Vec<InstallInfo>, String> {
+        let conf = config_dir();
+        if conf.is_none() {
+            return Err(String::from("Failed to find a config directory for OS."));
+        }
+        let mut conf = conf.unwrap();
         conf.push("one-pkg");
         conf.push("pkg-ls.json");
         if !conf.exists() {
-            return Vec::new();
+            return Ok(Vec::new());
         }
 
         conf.push("installed.json");
         if !conf.exists() {
-            return Vec::new();
+            return Ok(Vec::new());
         }
 
-        let mut installed_file = File::open(conf).expect("Couldn't open installed list file.");
+        let installed_file = File::open(conf);
+        if installed_file.is_err() {
+            return Err(format!(
+                "Couldn't open installed list file. Error: {}", installed_file.err().unwrap()
+            ));
+        }
+        let installed_file = installed_file.unwrap();
         let mut installed_str = String::new();
-        installed_file.read_to_string(&mut installed_str)
-            .expect("Failed to read all text in installed.json");
+        let read_res = installed_file.read_to_string(&mut installed_str);
+        if read_res.is_err() {
+            return Err(format!(
+                "Failed to read all text in installed.json. Error: {}", read_res.err().unwrap()
+            ));
+        }
         let insts_res: Result<Vec<InstallInfo>, _> = from_str(installed_str.as_str());
         match insts_res {
-            Ok(insts) => insts,
-            Err(_) => Vec::new()
+            Ok(insts) => Ok(insts),
+            Err(err) => Err(format!("Corrupted installed.json! Error parsing: {}", err.to_string()))
         }
     }
 }
 
-pub fn update_repo() {
+pub fn update_repo() -> Result<(), String> {
     println!("Updating repo.");
 
     // Create .config directory
-    let mut conf = config_dir().expect("Failed to find a config directory for OS.");
+    let conf = config_dir();
+    if conf.is_none() {
+        return Err(String::from("Failed to find a config directory for OS."));
+    }
+    let mut conf = conf.unwrap();
     conf.push("one-pkg");
     if !conf.exists() {
         println!("One-Pkg config folder does not exist.\nCreating .config/one-pkg/");
-        create_dir_all(conf.clone()).expect("Failed to create .config/one-pkg");
+        let create = create_dir_all(conf.clone());
+        if create.is_err() {
+            return Err(format!(
+                "Failed to create .config/one-pkg. Error: {}", create.err().unwrap()
+            ));    
+        }
     }
 
     // Make a backup
@@ -176,27 +199,36 @@ pub fn update_repo() {
     old.push("pkg-ls.json.old");
     if repo.exists() {
         println!("Backing up package list.");
-        rename(repo, old).expect("Failed to make backup of package list!");
+        let ren_res = rename(repo, old);
+        if ren_res.is_err() {
+            return Err(format!(
+                    "Failed to make backup of package list! Error: {}", ren_res.err().unwrap()
+            ));
+        }
     }
 
     // Download new list
     println!("Downloading new pkg-ls.json via curl from '{}'", PKG_LS_URL);
-    Command::new("curl")
+    let curl_res = Command::new("curl")
         .args([
             "-o",
             format!("{}/pkg-ls.json", conf.into_os_string().to_str().unwrap()).as_str(),
             PKG_LS_URL
-        ]).output()
-        .expect("Failed to download new pkg-ls.json");
+        ]).output();
+    if curl_res.is_err() {
+        return Err(format!(
+            "Failed to download new pkg-ls.json. Error: {}", curl_res.err().unwrap()
+        ));
+    }
 
     println!("Verifying new repo...");
-    match Package::load() {
-        Ok(_) => println!("Successfully verified."),
-        Err(msg) => println!("Error! Invalid pkg-ls.json: {}\nUpdate failed!", msg)
-    }
+    Package::load()?;
+    Ok(println!("Successfully verified new repo."))
 }
 
-pub fn auto_uninstall() {
+pub fn auto_uninstall() -> Result<(), String> {
     println!("Auto-uninstalling packages.");
+
+    Ok(())
 }
 
